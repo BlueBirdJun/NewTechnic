@@ -14,7 +14,8 @@ namespace EventSourcing.Demo
     public class WarehouseProduct
     {
         public string Sku { get; }
-        private readonly IList<IEvent> _events = new List<IEvent>();
+        private readonly IList<IEvent> _allEvents = new List<IEvent>();
+        private readonly IList<IEvent> _uncommittedEvents = new List<IEvent>();
 
         // Projection (Current State)
         private readonly CurrentState _currentState = new();
@@ -64,12 +65,7 @@ namespace EventSourcing.Demo
             _currentState.QuantityOnHand += evnt.Quantity;
         }
 
-        public IList<IEvent> GetEvents()
-        {
-            return _events;
-        }
-
-        public void AddEvent(IEvent evnt)
+        public void ApplyEvent(IEvent evnt)
         {
             switch (evnt)
             {
@@ -86,7 +82,28 @@ namespace EventSourcing.Demo
                     throw new InvalidOperationException("Unsupported Event.");
             }
 
-            _events.Add(evnt);
+            _allEvents.Add(evnt);
+        }
+
+        public void AddEvent(IEvent evnt)
+        {
+            ApplyEvent(evnt);
+            _uncommittedEvents.Add(evnt);
+        }
+
+        public IList<IEvent> GetUncommittedEvents()
+        {
+            return new List<IEvent>(_uncommittedEvents);
+        }
+
+        public IList<IEvent> GetAllEvents()
+        {
+            return new List<IEvent>(_allEvents);
+        }
+
+        public void EventsCommitted()
+        {
+            _uncommittedEvents.Clear();
         }
 
         public int GetQuantityOnHand()

@@ -8,6 +8,7 @@ namespace EventSourcing.Demo
         {
             
             var warehouseProductRepository = new WarehouseProductRepository();
+            var projection = new Projection(new ProductDbContext());
             var key = string.Empty;
             while (key != "X")
             {
@@ -16,11 +17,13 @@ namespace EventSourcing.Demo
                 Console.WriteLine("A: Inventory Adjustment");
                 Console.WriteLine("Q: Quantity On Hand");
                 Console.WriteLine("E: Events");
+                Console.WriteLine("P: Projection");
                 Console.Write("> ");
                 key = Console.ReadLine()?.ToUpperInvariant();
                 Console.WriteLine();
 
-                var sku = GetSkuFromConsole();
+                var sku = GetSkuFromConsole(); //단순 sku 
+
                 var warehouseProduct = warehouseProductRepository.Get(sku);
                 switch (key)
                 {
@@ -55,7 +58,7 @@ namespace EventSourcing.Demo
                         break;
                     case "E":
                         Console.WriteLine($"Events: {sku}");
-                        foreach (var evnt in warehouseProduct.GetEvents())
+                        foreach (var evnt in warehouseProduct.GetAllEvents())
                         {
                             switch (evnt)
                             {
@@ -70,6 +73,12 @@ namespace EventSourcing.Demo
                                     break;
                             } 
                         }
+                        break;
+                    case "P":
+                        Console.WriteLine($"Projection: {sku}");
+                        var productProjection = projection.GetProduct(sku);
+                        Console.WriteLine($"{sku} Received: {productProjection.Received}");
+                        Console.WriteLine($"{sku} Shipped: {productProjection.Shipped}");
                         break;
                 }
                 warehouseProductRepository.Save(warehouseProduct);
